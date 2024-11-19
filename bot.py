@@ -1,4 +1,3 @@
-
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -22,37 +21,20 @@ application.add_handler(CommandHandler("start", start))
 # Flask маршрут для вебхуков
 @app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    request_data = request.get_json(force=True)
-    update = Update.de_json(request_data, application.bot)
-    application.process_update(update)
-    return "OK", 200
+    try:
+        request_data = request.get_json(force=True)
+        update = Update.de_json(request_data, application.bot)
+        application.process_update(update)
+        return "OK", 200
+    except Exception as e:
+        print(f"Ошибка при обработке вебхука: {e}")
+        return "Internal Server Error", 500
 
 # Запуск приложения
 if __name__ == "__main__":
-    application.bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
-
-'''
-import os
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-
-# Загрузка переменных окружения из .env (локально)
-load_dotenv()
-
-# Получение токена из переменной окружения
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-
-
-# Обработка команды /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("Привет! Я бот.")
-
-
-# Создание и запуск бота
-if __name__ == "__main__":
-    application = ApplicationBuilder().token(TOKEN).build()
-    application.add_handler(CommandHandler("start", start))
-    application.run_polling()
-'''
-
+    # Настраиваем вебхук
+    success = application.bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
+    if success:
+        print(f"Вебхук успешно установлен на {WEBHOOK_URL}/{TOKEN}")
+    else:
+        print("Ошибка установки вебхука!")
